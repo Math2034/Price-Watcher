@@ -1,17 +1,65 @@
-# desafio-python
+# Price Watcher
 
-Essa é a resolução de um exercício em python que eu realizei, eu o fiz da minha maneira, mas você pode fazer da sua, apenas segue o exercício:
+A Python bot that monitors Amazon product prices and sends you an email alert whenever it detects a deal.
 
-"Tempos modernos"… e não nos referimos ao clássico filme de Charles Chaplin, mas sim às facilidades que a tecnologia proporciona, inimagináveis há algumas décadas. Uma dessas tecnologias é a internet, que possibilitou as compras online.Podemos comprar em sites de empresas e em poucos dias a mercadoria estará em nossas mãos. 
-A Impacta Express, uma multinacional de comércio eletrônico e com sua própria logística de distribuição, quer revolucionar realizando qualquer entrega no prazo de até seis dias a partir da realização da compra.
+## Setup
 
-Por participar de sites de programação como o URI Online Judge, o coordenador de TI da Impacta Express encontrou você entre os primeiros do rank, ficou fascinado com seu desempenho e te convidou para uma entrevista!
-Como parte da entrevista, o coordenador solicitou um programa que receba como entrada dois valores: (I) uma string com um dia da semana ('domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta' ou 'sabado'), sem acentuação, que indica o dia que um cliente realizou a compra no site da empresa; (II) um número natural que pode variar de 0 a 6, que indica a quantidade de dias, a partir da realização da compra, que o cliente deverá aguardar para receber a mercadoria. O programa deve exibir o dia da semana que a compra será entregue.
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
 
-Note que um prazo de zero dias significa que a entrega será concluída no mesmo dia, assim como um prazo de dois dias significa que a entrega será concluída exatamente dois dias após a realização da compra. Por exemplo, se a compra foi realizada no 'sabado' e o prazo é de três dias, o cliente receberá na 'terca'. Cuidado com a acentuação, repare que ela não está presente nas entradas e nem nas saídas, nem mesmo o 'ç' de terça.
+# 2. Configure the bot
+#    Open config.py and fill in:
+#      - Your email credentials
+#      - The products you want to monitor (URL + alert criteria)
 
-Entrada
-A entrada é composta por duas linhas, a primeira conterá uma string que corresponde a um dia da semana, que poderá ser qualquer um destes: ('domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta' ou 'sabado'), sem acentuação e sem os apóstrofos, que representa o dia em que o cliente realizou a compra; a segunda linha contém um número natural entre 0 e 6 (inclusive os extremos), que indica o prazo que o cliente deve esperar até receber sua compra.
+# 3. Run
+python bot.py
+```
 
-Saída
-Uma string que indica o dia que o usuário receberá sua compra. Caso o usuário receba no mesmo dia, deverá ser exibida a string 'chega hoje!', sem apóstrofos. Caso o usuário receba em algum dos seis dias posteriores à compra, deverá ser exibida a string 'sera entregue <dia>', em que <dia> será o dia correspondente, também sem apóstrofos e sem acentuação
+## Gmail setup
+
+Gmail won't accept your regular password for scripts. You need an **App Password**:
+
+1. Go to: https://myaccount.google.com/apppasswords
+2. Select "Other" and name it "Price Watcher"
+3. Copy the generated 16-character password and paste it into `config.py`
+
+## Adding products
+
+Each product in `config.py` has 4 fields:
+
+| Field | What it does |
+|---|---|
+| `name` | Label shown in the email alert |
+| `url` | Amazon product link |
+| `target_price` | Alert if price drops **below** this value |
+| `min_discount` | Alert if price drops **X%** below historical average |
+
+Both criteria work independently — use one, both, or neither per product.
+
+## How it works
+
+```
+bot.py
+  ├── Every X hours (configurable), checks all products
+  ├── Scrapes the current price from Amazon
+  ├── Saves the price to a local SQLite database (prices.db)
+  ├── Compares against the fixed target and/or historical average
+  └── If a deal is detected → sends an email alert
+```
+
+## Running in the background (Linux/Mac)
+
+```bash
+# Keeps running even after closing the terminal
+nohup python bot.py &
+
+# Watch the logs live
+tail -f watcher.log
+```
+
+## Notes
+
+- Amazon occasionally blocks scrapers. If it stops working, try increasing `CHECK_INTERVAL_HOURS` in `config.py` — the more spread out the requests, the less likely to get blocked.
+- The historical average discount only kicks in after several data collection cycles. For the first day or two, only `target_price` alerts will fire.
