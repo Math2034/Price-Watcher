@@ -36,7 +36,7 @@ Each product in `config.py` has 4 fields:
 | `target_price` | Alert if price drops **below** this value |
 | `min_discount` | Alert if price drops **X%** below historical average |
 
-Both criteria work independently — use one, both, or neither per product.
+Both criteria work independently, use one, both, or neither per product.
 
 ## How it works
 
@@ -61,5 +61,5 @@ tail -f watcher.log
 
 ## Notes
 
-- Amazon occasionally blocks scrapers. If it stops working, try increasing `CHECK_INTERVAL_HOURS` in `config.py` — the more spread out the requests, the less likely to get blocked.
+- Amazon occasionally blocks scrapers. If it stops working, try increasing `CHECK_INTERVAL_HOURS` in `config.py`, the more spread out the requests, the less likely to get blocked.
 - The historical average discount only kicks in after several data collection cycles. For the first day or two, only `target_price` alerts will fire.
