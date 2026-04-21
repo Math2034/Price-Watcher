@@ -63,3 +63,4 @@ tail -f watcher.log
 
 - Amazon occasionally blocks scrapers. If it stops working, try increasing `CHECK_INTERVAL_HOURS` in `config.py`, the more spread out the requests, the less likely to get blocked.
 - The historical average discount only kicks in after several data collection cycles. For the first day or two, only `target_price` alerts will fire.
+- Fazer a juncao com Selenium e site
