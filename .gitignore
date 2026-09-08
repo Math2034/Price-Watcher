@@ -1,0 +1,24 @@
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+config.local.py
+
+# Runtime data
+*.db
+*.sqlite
+*.sqlite3
+watcher.log
+*.log
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+
+# OS and editor files
+.DS_Store
+.vscode/
+.idea/
