@@ -1,45 +1,45 @@
-# ================================================================
-#  config.py — Set everything up here before running the bot
-# ================================================================
+"""Runtime configuration for Price Watcher.
 
-# ── Where to save the database ──────────────────────────────────
-DB_PATH = "prices.db"
+Keep real credentials in environment variables or a local .env file that is
+never committed to GitHub.
+"""
 
-# ── How often the bot checks prices (in hours) ──────────────────
-CHECK_INTERVAL_HOURS = 6
+import os
+from pathlib import Path
 
-# ── Email settings ───────────────────────────────────────────────
-# Tip: use a Gmail account with an "App Password" (not your regular password)
-# How to generate one: https://myaccount.google.com/apppasswords
+
+def _env_int(name: str, default: int) -> int:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be an integer") from exc
+
+
+DB_PATH = os.getenv("PRICE_WATCHER_DB_PATH", "prices.db")
+CHECK_INTERVAL_HOURS = _env_int("PRICE_WATCHER_INTERVAL_HOURS", 6)
+
 EMAIL_CONFIG = {
-    "smtp_host":  "smtp.gmail.com",
-    "smtp_port":  587,
-    "sender":     "your_email@gmail.com",   # ← replace
-    "password":   "xxxx xxxx xxxx xxxx",    # ← Gmail app password
-    "recipient":  "your_email@gmail.com",   # ← can be the same address
+    "smtp_host": os.getenv("PRICE_WATCHER_SMTP_HOST", "smtp.gmail.com"),
+    "smtp_port": _env_int("PRICE_WATCHER_SMTP_PORT", 587),
+    "sender": os.getenv("PRICE_WATCHER_EMAIL_SENDER", ""),
+    "password": os.getenv("PRICE_WATCHER_EMAIL_PASSWORD", ""),
+    "recipient": os.getenv("PRICE_WATCHER_EMAIL_RECIPIENT", ""),
 }
 
-# ── Products to monitor ──────────────────────────────────────────
-# For each product:
-#   name          → label shown in the email alert
-#   url           → Amazon product link
-#   target_price  → alert if price drops BELOW this value (optional)
-#   min_discount  → alert if price drops X% below historical average (optional)
-#
-# You can use one criterion, both, or neither per product.
+# Add real products locally. Keep URLs and personal product lists out of commits
+# when they contain private or account-specific information.
+PRODUCTS: list[dict] = []
 
-PRODUCTS = [
-    {
-        "name": "Dell Inspiron 15 Laptop",
-        "url": "https://www.amazon.com/dp/XXXXXXXXXX",  # ← replace with real link
-        "target_price": 699.00,    # alert if price drops below $699
-        "min_discount": 10,        # alert if price drops 10%+ vs historical average
-    },
-    {
-        "name": "Kingston 1TB SSD",
-        "url": "https://www.amazon.com/dp/XXXXXXXXXX",  # ← replace with real link
-        "target_price": 79.00,
-        "min_discount": 15,
-    },
-    # Add as many products as you want following the same pattern...
-]
+# Example product configuration:
+#
+# PRODUCTS = [
+#     {
+#         "name": "Example product",
+#         "url": "https://www.amazon.com/dp/REPLACE_ME",
+#         "target_price": 699.00,
+#         "min_discount": 10,
+#     },
+# ]
