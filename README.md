@@ -1,66 +1,100 @@
 # Price Watcher
 
-A Python bot that monitors Amazon product prices and sends you an email alert whenever it detects a deal.
+A Python automation project that monitors product prices and sends an email alert when a configured deal is detected.
 
-## Setup
+This is a personal portfolio project demonstrating web requests, HTML parsing, SQLite persistence, scheduled checks and email automation.
 
-```bash
-# 1. Install dependencies
-pip install -r requirements.txt
+## What problem it solves
 
-# 2. Configure the bot
-#    Open config.py and fill in:
-#      - Your email credentials
-#      - The products you want to monitor (URL + alert criteria)
+Manually checking prices is repetitive and easy to forget. Price Watcher records price history and alerts the user when a product reaches a target price or drops by a chosen percentage compared with recent history.
 
-# 3. Run
-python bot.py
-```
+## Technologies
 
-## Gmail setup
-
-Gmail won't accept your regular password for scripts. You need an **App Password**:
-
-1. Go to: https://myaccount.google.com/apppasswords
-2. Select "Other" and name it "Price Watcher"
-3. Copy the generated 16-character password and paste it into `config.py`
-
-## Adding products
-
-Each product in `config.py` has 4 fields:
-
-| Field | What it does |
-|---|---|
-| `name` | Label shown in the email alert |
-| `url` | Amazon product link |
-| `target_price` | Alert if price drops **below** this value |
-| `min_discount` | Alert if price drops **X%** below historical average |
-
-Both criteria work independently, use one, both, or neither per product.
+- Python
+- Requests and BeautifulSoup
+- SQLite
+- SMTP email
+- Logging
+- Scheduled polling
 
 ## How it works
 
-```
-bot.py
-  ├── Every X hours (configurable), checks all products
-  ├── Scrapes the current price from Amazon
-  ├── Saves the price to a local SQLite database (prices.db)
-  ├── Compares against the fixed target and/or historical average
-  └── If a deal is detected → sends an email alert
-```
+1. Read the local product configuration.
+2. Request each product page.
+3. Parse the displayed price.
+4. Save the result to SQLite.
+5. Compare the current price with the configured rules.
+6. Send an HTML email when a deal is detected.
 
-## Running in the background (Linux/Mac)
+## Setup
 
-```bash
-# Keeps running even after closing the terminal
-nohup python bot.py &
+Create and activate a virtual environment, then install dependencies:
 
-# Watch the logs live
-tail -f watcher.log
-```
+    python -m venv .venv
+    source .venv/bin/activate        # macOS/Linux
+    .venv\Scripts\Activate.ps1     # Windows PowerShell
+    pip install -r requirements.txt
 
-## Notes
+Add config.py locally. The repository keeps the committed product list empty so personal URLs and thresholds are not published accidentally.
 
-- Amazon occasionally blocks scrapers. If it stops working, try increasing `CHECK_INTERVAL_HOURS` in `config.py`, the more spread out the requests, the less likely to get blocked.
-- The historical average discount only kicks in after several data collection cycles. For the first day or two, only `target_price` alerts will fire.
-- Fazer a juncao com Selenium e site
+## Environment variables
+
+Email settings are read at runtime. Do not put passwords in config.py or commit them to GitHub.
+
+### Windows PowerShell
+
+    $env:PRICE_WATCHER_EMAIL_SENDER = "you@example.com"
+    $env:PRICE_WATCHER_EMAIL_PASSWORD = "your-app-password"
+    $env:PRICE_WATCHER_EMAIL_RECIPIENT = "you@example.com"
+    $env:PRICE_WATCHER_INTERVAL_HOURS = "6"
+    python bot.py
+
+### macOS/Linux
+
+    export PRICE_WATCHER_EMAIL_SENDER="you@example.com"
+    export PRICE_WATCHER_EMAIL_PASSWORD="your-app-password"
+    export PRICE_WATCHER_EMAIL_RECIPIENT="you@example.com"
+    export PRICE_WATCHER_INTERVAL_HOURS="6"
+    python bot.py
+
+For Gmail, use an App Password rather than your normal account password. Keep the value private.
+
+Optional variables:
+- PRICE_WATCHER_SMTP_HOST (default: smtp.gmail.com)
+- PRICE_WATCHER_SMTP_PORT (default: 587)
+- PRICE_WATCHER_DB_PATH (default: prices.db)
+
+## Running
+
+    python bot.py
+
+The bot checks products every six hours by default. Runtime database and log files are ignored by Git.
+
+## Portfolio evidence
+
+This project demonstrates:
+- designing a small automation workflow;
+- integrating HTTP requests and HTML parsing;
+- persisting structured history in SQLite;
+- implementing configurable business rules;
+- generating and sending an HTML email;
+- adding logging and defensive configuration handling.
+
+## Current limitations
+
+- Product page layouts can change and break selectors.
+- Some retailers rate-limit or block automated requests.
+- The project currently uses polling rather than a hosted scheduler.
+- No web dashboard or multi-user authentication is included.
+
+## Future improvements
+
+- Add parser tests with saved HTML fixtures.
+- Support retailer-specific parsers.
+- Add retries and backoff for temporary request failures.
+- Add a small dashboard for price history.
+- Run checks through a scheduled GitHub Actions workflow or hosted worker.
+
+## Disclaimer
+
+Use the project responsibly and follow each retailer's terms of service and applicable rate limits.
