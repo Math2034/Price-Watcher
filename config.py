@@ -7,6 +7,15 @@ never committed to GitHub.
 import os
 from pathlib import Path
 
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - dependency is installed from requirements.txt
+    load_dotenv = None
+
+
+if load_dotenv is not None:
+    load_dotenv(dotenv_path=Path(__file__).with_name(".env"))
+
 
 def _env_int(name: str, default: int) -> int:
     value = os.getenv(name)
@@ -29,9 +38,14 @@ EMAIL_CONFIG = {
     "recipient": os.getenv("PRICE_WATCHER_EMAIL_RECIPIENT", ""),
 }
 
-# Add real products locally. Keep URLs and personal product lists out of commits
-# when they contain private or account-specific information.
-PRODUCTS: list[dict] = []
+# Add real products in the ignored config_local.py file. Keeping personal
+# product lists outside the tracked config prevents accidental publication.
+try:
+    from config_local import PRODUCTS as LOCAL_PRODUCTS
+except ModuleNotFoundError:
+    LOCAL_PRODUCTS = []
+
+PRODUCTS: list[dict] = LOCAL_PRODUCTS
 
 # Example product configuration:
 #

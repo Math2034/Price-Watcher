@@ -35,7 +35,9 @@ Create and activate a virtual environment, then install dependencies:
     .venv\Scripts\Activate.ps1     # Windows PowerShell
     pip install -r requirements.txt
 
-Add config.py locally. The repository keeps the committed product list empty so personal URLs and thresholds are not published accidentally.
+Add a local `config_local.py` file for products. The tracked configuration keeps
+the product list empty so personal URLs and thresholds are not published
+accidentally.
 
 ## Environment variables
 
@@ -68,6 +70,18 @@ Optional variables:
 
     python bot.py
 
+For a single check (useful while testing), run:
+
+    python bot.py --once
+
+To send one labelled test alert, run `python bot.py --test-email`. The
+program asks for the sender, recipient and App Password locally; the password
+is not written to the repository.
+
+To save those settings locally for scheduled runs, use
+`python bot.py --setup-email`. This writes an ignored `.env` file. Treat that
+file as a secret and never upload it.
+
 The bot checks products every six hours by default. Runtime database and log files are ignored by Git.
 
 ## Portfolio evidence
@@ -79,6 +93,15 @@ This project demonstrates:
 - implementing configurable business rules;
 - generating and sending an HTML email;
 - adding logging and defensive configuration handling.
+
+## Troubleshooting case study
+
+The first JB Hi-Fi check returned no price. I investigated the HTTP response,
+found that the request advertised Brotli compression without a decoder, and
+changed the headers to use supported compression. The retailer also exposed
+its price through Schema.org JSON-LD rather than Amazon's selectors, so I added
+a structured-data parser with a fallback for the original Amazon selectors.
+The live check then read `$299.00`, and four automated tests passed.
 
 ## Current limitations
 

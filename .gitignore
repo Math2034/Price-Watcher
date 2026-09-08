@@ -3,6 +3,7 @@
 .env.*
 !.env.example
 config.local.py
+config_local.py
 
 # Runtime data
 *.db

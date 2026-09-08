@@ -1,6 +1,8 @@
 import unittest
 
-from bot import _parse_price
+from bs4 import BeautifulSoup
+
+from bot import _extract_jsonld_price, _parse_price
 
 
 class ParsePriceTests(unittest.TestCase):
@@ -12,6 +14,15 @@ class ParsePriceTests(unittest.TestCase):
 
     def test_returns_none_for_invalid_text(self):
         self.assertIsNone(_parse_price("price unavailable"))
+
+    def test_reads_schema_product_price(self):
+        html = '''
+        <script type="application/ld+json">
+        {"@type":"Product","offers":{"price":"299.00","priceCurrency":"AUD"}}
+        </script>
+        '''
+        soup = BeautifulSoup(html, "html.parser")
+        self.assertEqual(_extract_jsonld_price(soup), 299.00)
 
 
 if __name__ == "__main__":

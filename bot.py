@@ -8,6 +8,10 @@ import sqlite3
 import smtplib
 import time
 import logging
+import json
+import sys
+import getpass
+from pathlib import Path
 from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -98,20 +102,72 @@ HEADERS = {
         "Chrome/120.0.0.0 Safari/537.36"
     ),
     "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
+    # Keep Brotli out of the request because the lightweight requests setup
+    # does not install a Brotli decoder. This lets servers return gzip/deflate
+    # responses that requests can decode reliably.
+    "Accept-Encoding": "gzip, deflate",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
 }
 
 
+def _extract_jsonld_price(soup: BeautifulSoup) -> float | None:
+    """Read a product price from Schema.org JSON-LD, when a page provides it."""
+    scripts = soup.find_all("script", attrs={"type": "application/ld+json"})
+
+    for script in scripts:
+        raw = script.string or script.get_text()
+        try:
+            payload = json.loads(raw)
+        except (TypeError, json.JSONDecodeError):
+            continue
+
+        nodes = payload if isinstance(payload, list) else [payload]
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+
+            offers = node.get("offers", [])
+            if isinstance(offers, dict):
+                offers = [offers]
+            if not isinstance(offers, list):
+                offers = []
+
+            for offer in offers:
+                if not isinstance(offer, dict):
+                    continue
+                candidates = [offer]
+                specifications = offer.get("priceSpecification", [])
+                if isinstance(specifications, dict):
+                    specifications = [specifications]
+                if isinstance(specifications, list):
+                    candidates.extend(specifications)
+
+                for candidate in candidates:
+                    for key in ("price", "lowPrice"):
+                        if key in candidate:
+                            price = _parse_price(str(candidate[key]))
+                            if price is not None:
+                                return price
+
+    return None
+
+
 def fetch_amazon_price(url: str) -> float | None:
     """
-    Scrapes the price from an Amazon product page.
+    Scrapes a product price from a retailer page.
+
+    Structured Schema.org data is checked first, followed by Amazon's legacy
+    HTML selectors for backwards compatibility with the original project.
     Returns the price as a float, or None if it can't be found.
     """
     try:
         resp = requests.get(url, headers=HEADERS, timeout=15)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, "html.parser")
+
+        structured_price = _extract_jsonld_price(soup)
+        if structured_price is not None:
+            return structured_price
 
         # Selectors in order of priority
         selectors = [
@@ -257,6 +313,55 @@ def send_email(deals: list[dict]):
         log.error("Failed to send email: %s", e)
 
 
+def test_email_connection():
+    """Send one clearly labelled test alert using credentials entered locally."""
+    sender = EMAIL_CONFIG.get("sender") or input("Gmail remetente: ").strip()
+    recipient = EMAIL_CONFIG.get("recipient") or input("E-mail destinatário: ").strip()
+    password = EMAIL_CONFIG.get("password") or getpass.getpass(
+        "App Password do Gmail (entrada oculta): "
+    ).strip()
+
+    EMAIL_CONFIG.update({
+        "sender": sender,
+        "recipient": recipient,
+        "password": password,
+    })
+    send_email([
+        {
+            "name": "Price Watcher test",
+            "url": "https://www.jbhifi.com.au/products/apple-airpods-4-with-active-noise-cancellation",
+            "current_price": 249.99,
+            "alerts": ["Test alert"],
+        }
+    ])
+
+
+def setup_email_config():
+    """Save local email settings to the ignored .env file."""
+    sender = input("Gmail remetente: ").strip()
+    recipient = input("E-mail destinatário: ").strip()
+    password = getpass.getpass(
+        "App Password do Gmail (entrada oculta): "
+    ).strip()
+    if not sender or not recipient or not password:
+        raise RuntimeError("Remetente, destinatário e App Password são obrigatórios.")
+
+    env_path = Path(__file__).with_name(".env")
+    env_path.write_text(
+        "\n".join(
+            [
+                f"PRICE_WATCHER_EMAIL_SENDER={sender}",
+                f"PRICE_WATCHER_EMAIL_PASSWORD={password}",
+                f"PRICE_WATCHER_EMAIL_RECIPIENT={recipient}",
+                "PRICE_WATCHER_INTERVAL_HOURS=6",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    print(f"Configuração salva localmente em {env_path.name}. O arquivo está no .gitignore.")
+
+
 # ──────────────────────────────────────────
 # Main loop
 # ──────────────────────────────────────────
@@ -285,6 +390,18 @@ def run_cycle():
 def main():
     init_db()
     log.info("Price Watcher started!")
+
+    if "--setup-email" in sys.argv:
+        setup_email_config()
+        return
+
+    if "--test-email" in sys.argv:
+        test_email_connection()
+        return
+
+    if "--once" in sys.argv:
+        run_cycle()
+        return
 
     while True:
         run_cycle()
