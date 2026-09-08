@@ -126,7 +126,7 @@ def fetch_amazon_price(url: str) -> float | None:
             if el:
                 raw = el.get_text().strip()
                 price = _parse_price(raw)
-                if price:
+                if price is not None:
                     return price
 
         log.warning("Price not found on page: %s", url)
@@ -232,6 +232,12 @@ def build_email_body(deals: list[dict]) -> str:
 
 def send_email(deals: list[dict]):
     cfg = EMAIL_CONFIG
+    missing = [key for key in ("sender", "password", "recipient") if not cfg.get(key)]
+    if missing:
+        raise RuntimeError(
+            "Missing email configuration. Set PRICE_WATCHER_EMAIL_SENDER, "
+            "PRICE_WATCHER_EMAIL_PASSWORD and PRICE_WATCHER_EMAIL_RECIPIENT."
+        )
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"Price Watcher — {len(deals)} deal(s) found!"
     msg["From"]    = cfg["sender"]
