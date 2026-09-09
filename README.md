@@ -2,6 +2,10 @@
 
 A Python bot that monitors Amazon product prices and sends you an email alert whenever it detects a deal.
 
+## Portfolio case study
+
+See the [Price Watcher automation case study](PRICE-WATCHER-CASE-STUDY.md) for the problem, implementation evidence, business value, limitations and next improvements.
+
 ## Setup
 
 ```bash
