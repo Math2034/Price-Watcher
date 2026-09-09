@@ -1,12 +1,26 @@
-# Price Watcher
+# Price Watcher — Python Price Monitoring Automation
 
-A Python automation project that monitors product prices and sends an email alert when a configured deal is detected.
+A Python automation project that monitors product prices on retailer pages and sends an email alert when a configured deal is detected. It demonstrates web requests, HTML parsing, SQLite persistence, scheduled checks and email automation.
 
-This is a personal portfolio project demonstrating web requests, HTML parsing, SQLite persistence, scheduled checks and email automation.
+> Portfolio project by Matheus Ramos. It demonstrates practical development ability; it is not presented as professional production experience.
 
 ## What problem it solves
 
 Manually checking prices is repetitive and easy to forget. Price Watcher records price history and alerts the user when a product reaches a target price or drops by a chosen percentage compared with recent history.
+
+## Portfolio snapshot
+
+| Capability | Evidence in this project |
+| --- | --- |
+| Python automation | Scheduled polling, defensive error handling and command-line modes |
+| Web integration | HTTP requests, response handling and HTML/JSON-LD parsing |
+| Data persistence | SQLite price history with parameterized queries |
+| Business rules | Fixed target-price and historical-discount alerts |
+| Operational thinking | Logging, environment-based secrets and documented limitations |
+
+## Quick demonstration
+
+After configuring a local product and email credentials, run `python bot.py --once` to perform one check. The repository intentionally keeps personal product URLs and credentials outside tracked files.
 
 ## Technologies
 
@@ -85,6 +99,8 @@ file as a secret and never upload it.
 The bot checks products every six hours by default. Runtime database and log files are ignored by Git.
 
 ## Portfolio evidence
+
+See the [Price Watcher case study](PRICE-WATCHER-CASE-STUDY.md) for a concise, business-focused explanation of the problem, implementation evidence, limitations and potential value.
 
 This project demonstrates:
 - designing a small automation workflow;

@@ -1,7 +1,7 @@
 """
-Price Watcher - Amazon Price Monitor
+Price Watcher - Product Price Monitor
 =====================================
-Monitors Amazon products and sends an email alert when a deal is detected.
+Monitors product pages and sends an email alert when a configured deal is detected.
 """
 
 import sqlite3
@@ -152,11 +152,11 @@ def _extract_jsonld_price(soup: BeautifulSoup) -> float | None:
     return None
 
 
-def fetch_amazon_price(url: str) -> float | None:
+def fetch_product_price(url: str) -> float | None:
     """
     Scrapes a product price from a retailer page.
 
-    Structured Schema.org data is checked first, followed by Amazon's legacy
+    Structured Schema.org data is checked first, followed by legacy retailer
     HTML selectors for backwards compatibility with the original project.
     Returns the price as a float, or None if it can't be found.
     """
@@ -220,7 +220,7 @@ def check_product(config: dict) -> dict | None:
     min_discount   = config.get("min_discount", 0)   # % drop from historical average
 
     log.info("Checking: %s", name)
-    current_price = fetch_amazon_price(url)
+    current_price = fetch_product_price(url)
 
     if current_price is None:
         return None
@@ -272,7 +272,7 @@ def build_email_body(deals: list[dict]) -> str:
         rows.append(f"<p><strong>Current price:</strong> ${d['current_price']:.2f}</p>")
         for alert in d["alerts"]:
             rows.append(f"<p>{alert}</p>")
-        rows.append(f'<p><a href="{d["url"]}">View on Amazon</a></p>')
+        rows.append(f'<p><a href="{d["url"]}">View product page</a></p>')
         rows.append("<hr>")
 
     return f"""
