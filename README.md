@@ -4,6 +4,10 @@ A Python automation project that monitors product prices on retailer pages and s
 
 > Portfolio project by Matheus Ramos. It demonstrates practical development ability; it is not presented as professional production experience.
 
+## Portfolio case study
+
+See the [Price Watcher automation case study](PRICE-WATCHER-CASE-STUDY.md) for the problem, implementation evidence, business value, limitations and next improvements.
+
 ## What problem it solves
 
 Manually checking prices is repetitive and easy to forget. Price Watcher records price history and alerts the user when a product reaches a target price or drops by a chosen percentage compared with recent history.
